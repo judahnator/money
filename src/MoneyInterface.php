@@ -44,7 +44,10 @@ interface MoneyInterface
      */
     public function formatWithSign(bool $displayCountryForUS = false): string;
 
-    public function getAmount(): float;
+    /**
+     * @return float|int|string
+     */
+    public function getAmount();
 
     public function getCurrency(): string;
 

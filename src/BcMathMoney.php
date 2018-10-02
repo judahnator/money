@@ -60,12 +60,12 @@ final class BcMathMoney extends MoneyProvider
         if ($displayCountryForUS && $this->currency === 'USD') {
 
             if (bccomp($this->amount, 0) >= 0) {
-                return 'US' . $formatter->formatCurrency($this->amount, $this->currency);
+                return 'US' . $formatter->formatCurrency((float)$this->amount, $this->currency);
             }
-            return '-US' . $formatter->formatCurrency(-$this->amount, $this->currency);
+            return '-US' . $formatter->formatCurrency((float)(-$this->amount), $this->currency);
         }
 
-        return $formatter->formatCurrency($this->amount, $this->currency);
+        return $formatter->formatCurrency((float)$this->amount, $this->currency);
     }
 
     /**
@@ -204,7 +204,7 @@ final class BcMathMoney extends MoneyProvider
     private static function bcfloor($number)
     {
         if (strpos($number, '.') !== false) {
-            if (preg_match("~\.[0]+$~", $number)) return bcround($number, 0);
+            if (preg_match("~\.[0]+$~", $number)) return self::bcround($number, 0);
             if ($number[0] != '-') return bcadd($number, 0, 0);
             return bcsub($number, 1, 0);
         }

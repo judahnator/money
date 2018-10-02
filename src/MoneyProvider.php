@@ -11,7 +11,7 @@ abstract class MoneyProvider implements MoneyInterface
 {
 
     /**
-     * @var float|string
+     * @var float|int|string
      */
     protected $amount;
 
@@ -53,7 +53,7 @@ abstract class MoneyProvider implements MoneyInterface
         }
     }
 
-    final public function getAmount(): float
+    final public function getAmount()
     {
         return $this->amount;
     }

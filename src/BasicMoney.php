@@ -48,11 +48,11 @@ final class BasicMoney extends MoneyProvider
 
         if ($displayCountryForUS && $this->currency === 'USD') {
             if ($this->amount >= 0) {
-                return 'US' . $formatter->formatCurrency($this->amount, $this->currency);
+                return 'US' . $formatter->formatCurrency((float)$this->amount, $this->currency);
             }
-            return '-US' . $formatter->formatCurrency(-$this->amount, $this->currency);
+            return '-US' . $formatter->formatCurrency((float)(-$this->amount), $this->currency);
         }
-        return $formatter->formatCurrency($this->amount, $this->currency);
+        return $formatter->formatCurrency((float)$this->amount, $this->currency);
     }
 
     /**

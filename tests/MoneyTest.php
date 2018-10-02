@@ -415,7 +415,7 @@ class MoneyTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('$78bn', $money->formatShorthand());
         $this->assertEquals('-$78bn', $money->inv()->formatShorthand());
 
-        $money = new Money(333377777777777.333, 'USD');
+        $money = new Money('333377777777777.333', 'USD');
         $this->assertEquals('$333tn', $money->formatShorthand());
         $this->assertEquals('-$333tn', $money->inv()->formatShorthand());
     }

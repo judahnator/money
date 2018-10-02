@@ -19,7 +19,11 @@
   "require-dev": {
     "phpbench/phpbench": "^0.13.0",
     "phpstan/phpstan": "^0.9.0",
-    "phpunit/phpunit": "^5.3"
+    "phpunit/phpunit": "^5.3",
+    "ext-bcmath": "*"
+  },
+  "suggest": {
+    "ext-bcmath": "Allows you to do math with big numbers"
   },
   "autoload": {
     "psr-4": {

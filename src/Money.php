@@ -1,20 +1,13 @@
 <?php namespace Votemike\Money;
 
-use DomainException;
-use InvalidArgumentException;
-use Symfony\Component\Intl\Intl;
-use Symfony\Component\Intl\NumberFormatter\NumberFormatter;
 
-class Money
+class Money implements MoneyInterface
 {
+
     /**
-     * @var float
+     * @var MoneyProvider
      */
-    private $amount;
-    /**
-     * @var string
-     */
-    private $currency;
+    private $provider;
 
     /**
      * @param float|int|string $amount
@@ -22,18 +15,14 @@ class Money
      */
     public function __construct($amount, string $currency)
     {
-        if (!is_numeric($amount)) {
-            throw new InvalidArgumentException('Money only accepts numeric amounts');
+        if (extension_loaded('bcmath')) {
+            $this->provider = new BcMathMoney($amount, $currency);
+        }else {
+            $this->provider = new BasicMoney($amount, $currency);
         }
-
-        if (!array_key_exists($currency, Intl::getCurrencyBundle()->getCurrencyNames())) {
-            throw new InvalidArgumentException($currency . ' is not a supported currency');
-        }
-        $this->amount = (float)$amount;
-        $this->currency = $currency;
     }
 
-    public function __toString(): string
+    final public function __toString(): string
     {
         return $this->format();
     }
@@ -43,26 +32,21 @@ class Money
      */
     public function abs(): Money
     {
-        return new static(abs($this->amount), $this->currency);
+        return $this->provider->abs();
     }
 
     public function add(Money $money): Money
     {
-        $this->assertCurrencyMatches($money);
-
-        return new static($this->amount + $money->getAmount(), $this->currency);
+        return $this->provider->add($money);
     }
 
     /**
      * @param float $operator
      * @return static
      */
-    public function divide($operator): Money
+    public function divide(float $operator): Money
     {
-        if ($operator == 0) {
-            throw new InvalidArgumentException('Cannot divide by zero');
-        }
-        return new static($this->amount / $operator, $this->currency);
+        return $this->provider->divide($operator);
     }
 
     /**
@@ -73,15 +57,7 @@ class Money
      */
     public function format(bool $displayCountryForUS = false): string
     {
-        $formatter = new NumberFormatter('en', NumberFormatter::CURRENCY);
-
-        if ($displayCountryForUS && $this->currency === 'USD') {
-            if ($this->amount >= 0) {
-                return 'US' . $formatter->formatCurrency($this->amount, $this->currency);
-            }
-            return '-US' . $formatter->formatCurrency(-$this->amount, $this->currency);
-        }
-        return $formatter->formatCurrency($this->amount, $this->currency);
+        return $this->provider->format($displayCountryForUS);
     }
 
     /**
@@ -90,13 +66,7 @@ class Money
      */
     public function formatForAccounting(): string
     {
-        $amount = $this->getRoundedAmount();
-        $negative = 0 > $amount;
-        if ($negative) {
-            $amount *= -1;
-        }
-        $amount = number_format($amount, Intl::getCurrencyBundle()->getFractionDigits($this->currency));
-        return $negative ? '(' . $amount . ')' : $amount;
+        return $this->provider->formatForAccounting();
     }
 
     /**
@@ -105,15 +75,7 @@ class Money
      */
     public function formatShorthand(): string
     {
-        $amount = $this->amount;
-        $negative = 0 > $amount;
-        if ($negative) {
-            $amount *= -1;
-        }
-        $units = ['', 'k', 'm', 'bn', 'tn'];
-        $power = $amount > 0 ? floor(log(round($amount), 1000)) : 0;
-        $ret = Intl::getCurrencyBundle()->getCurrencySymbol($this->currency, 'en').round($amount / pow(1000, $power), 0). $units[$power];
-        return $negative ? '-'.$ret : $ret;
+        return $this->provider->formatShorthand();
     }
 
     /**
@@ -124,23 +86,17 @@ class Money
      */
     public function formatWithSign(bool $displayCountryForUS = false): string
     {
-        $string = $this->format($displayCountryForUS);
-
-        if ($this->amount <= 0) {
-            return $string;
-        }
-
-        return '+' . $string;
+        return $this->provider->formatWithSign($displayCountryForUS);
     }
 
     public function getAmount(): float
     {
-        return $this->amount;
+        return $this->provider->getAmount();
     }
 
     public function getCurrency(): string
     {
-        return $this->currency;
+        return $this->provider->getCurrency();
     }
 
     /**
@@ -148,18 +104,7 @@ class Money
      */
     public function getRoundedAmount(): float
     {
-        $fractionDigits = Intl::getCurrencyBundle()->getFractionDigits($this->currency);
-        $roundingIncrement = Intl::getCurrencyBundle()->getRoundingIncrement($this->currency);
-
-        $value = round($this->amount, $fractionDigits);
-
-        // Swiss rounding
-        if (0 < $roundingIncrement && 0 < $fractionDigits) {
-            $roundingFactor = $roundingIncrement / pow(10, $fractionDigits);
-            $value = round($value / $roundingFactor) * $roundingFactor;
-        }
-
-        return $value;
+        return $this->provider->getRoundedAmount();
     }
 
     /**
@@ -167,7 +112,7 @@ class Money
      */
     public function inv(): Money
     {
-        return new static(-$this->amount, $this->currency);
+        return $this->provider->inv();
     }
 
     /**
@@ -176,7 +121,7 @@ class Money
      */
     public function multiply($operator): Money
     {
-        return new static($this->amount * $operator, $this->currency);
+        return $this->provider->multiply($operator);
     }
 
     /**
@@ -187,7 +132,7 @@ class Money
      */
     public function percentage($percentage): Money
     {
-        return new static(($this->amount * $percentage) / 100, $this->currency);
+        return $this->provider->percentage($percentage);
     }
 
     /**
@@ -195,7 +140,7 @@ class Money
      */
     public function round(): Money
     {
-        return new static($this->getRoundedAmount(), $this->currency);
+        return $this->provider->round();
     }
 
     /**
@@ -211,42 +156,7 @@ class Money
      */
     public function split(array $percentages, bool $round = true): array
     {
-        $totalPercentage = array_sum($percentages);
-        if ($totalPercentage > 100) {
-            throw new InvalidArgumentException('Only 100% can be allocated');
-        }
-        $amounts = [];
-        $total = 0;
-        if (!$round) {
-            foreach ($percentages as $percentage) {
-                $share = $this->percentage($percentage);
-                $total += $share->getAmount();
-                $amounts[] = $share;
-            }
-            if ($totalPercentage != 100) {
-                $amounts[] = new static($this->amount - $total, $this->currency);
-            }
-            return $amounts;
-        }
-
-        $count = 0;
-
-        if ($totalPercentage != 100) {
-            $percentages[] = 0; //Dummy record to trigger the rest of the amount being assigned to a final pot
-        }
-
-        foreach ($percentages as $percentage) {
-            ++$count;
-            if ($count == count($percentages)) {
-                $amounts[] = new static($this->amount - $total, $this->currency);
-            } else {
-                $share = $this->percentage($percentage)->round();
-                $total += $share->getAmount();
-                $amounts[] = $share;
-            }
-        }
-
-        return $amounts;
+        return $this->provider->split($percentages, $round);
     }
 
     /**
@@ -255,18 +165,7 @@ class Money
      */
     public function sub(Money $money): Money
     {
-        $this->assertCurrencyMatches($money);
-
-        return new static($this->amount - $money->getAmount(), $this->currency);
+        return $this->provider->sub($money);
     }
 
-    /**
-     * @param Money $money
-     */
-    private function assertCurrencyMatches(Money $money)
-    {
-        if ($this->currency !== $money->getCurrency()) {
-            throw new DomainException('Currencies must match');
-        }
-    }
 }

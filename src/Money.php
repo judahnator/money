@@ -1,6 +1,5 @@
 <?php namespace Votemike\Money;
 
-
 class Money implements MoneyInterface
 {
 
@@ -17,7 +16,7 @@ class Money implements MoneyInterface
     {
         if (extension_loaded('bcmath')) {
             $this->provider = new BcMathMoney($amount, $currency);
-        }else {
+        } else {
             $this->provider = new BasicMoney($amount, $currency);
         }
     }
@@ -167,5 +166,4 @@ class Money implements MoneyInterface
     {
         return $this->provider->sub($money);
     }
-
 }

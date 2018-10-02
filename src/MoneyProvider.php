@@ -2,7 +2,6 @@
 
 namespace Votemike\Money;
 
-
 use DomainException;
 use InvalidArgumentException;
 use Symfony\Component\Intl\Intl;
@@ -122,5 +121,4 @@ abstract class MoneyProvider implements MoneyInterface
 
         return $amounts;
     }
-
 }

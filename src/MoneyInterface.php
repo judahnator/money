@@ -2,10 +2,8 @@
 
 namespace Votemike\Money;
 
-
 interface MoneyInterface
 {
-
     public function abs(): Money;
 
     public function add(Money $money): Money;
@@ -98,5 +96,4 @@ interface MoneyInterface
      * @return Money
      */
     public function sub(Money $money): Money;
-
 }

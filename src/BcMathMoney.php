@@ -2,14 +2,12 @@
 
 namespace Votemike\Money;
 
-
 use InvalidArgumentException;
 use Symfony\Component\Intl\Intl;
 use Symfony\Component\Intl\NumberFormatter\NumberFormatter;
 
 final class BcMathMoney extends MoneyProvider
 {
-
     public function abs(): Money
     {
         if (bccomp($this->amount, 0) === -1) {
@@ -58,7 +56,6 @@ final class BcMathMoney extends MoneyProvider
         $formatter = new NumberFormatter('en', NumberFormatter::CURRENCY);
 
         if ($displayCountryForUS && $this->currency === 'USD') {
-
             if (bccomp($this->amount, 0) >= 0) {
                 return 'US' . $formatter->formatCurrency((float)$this->amount, $this->currency);
             }
@@ -100,11 +97,11 @@ final class BcMathMoney extends MoneyProvider
             if ($power > 1) {
                 $amount = self::bcround(bcdiv($amount, bcpow(10, $power), $power));
                 $unitIndex = $power / 3;
-            }else {
+            } else {
                 $unitIndex = 0;
             }
             $unit = ['', 'k', 'm', 'bn', 'tn'][$unitIndex];
-        }else {
+        } else {
             $unit = '';
         }
         return
@@ -112,7 +109,6 @@ final class BcMathMoney extends MoneyProvider
             Intl::getCurrencyBundle()->getCurrencySymbol($this->currency, 'en').
             $amount.
             $unit;
-
     }
 
     /**
@@ -204,8 +200,12 @@ final class BcMathMoney extends MoneyProvider
     private static function bcfloor($number)
     {
         if (strpos($number, '.') !== false) {
-            if (preg_match("~\.[0]+$~", $number)) return self::bcround($number, 0);
-            if ($number[0] != '-') return bcadd($number, 0, 0);
+            if (preg_match("~\.[0]+$~", $number)) {
+                return self::bcround($number, 0);
+            }
+            if ($number[0] != '-') {
+                return bcadd($number, 0, 0);
+            }
             return bcsub($number, 1, 0);
         }
         return $number;
@@ -227,7 +227,6 @@ final class BcMathMoney extends MoneyProvider
         while (count($digits) > $precision) {
             $lastChar = array_pop($digits);
             if ($lastChar >= 5) {
-
                 $position = 1;
                 $resolved = false;
                 while (!$resolved) {
@@ -245,12 +244,11 @@ final class BcMathMoney extends MoneyProvider
                     if ($digit === 10) {
                         $digit = 0;
                         $position++;
-                    }else {
+                    } else {
                         $resolved = true;
                     }
                     unset($digit);
                 }
-
             }
         }
 
@@ -264,7 +262,7 @@ final class BcMathMoney extends MoneyProvider
         if (strpos($number, '.') === false) {
             return 0;
         }
-        list ($left, $right) = explode('.', $number);
+        list($left, $right) = explode('.', $number);
         return strlen($right);
     }
 }

@@ -2,14 +2,12 @@
 
 namespace Votemike\Money;
 
-
 use InvalidArgumentException;
 use Symfony\Component\Intl\Intl;
 use Symfony\Component\Intl\NumberFormatter\NumberFormatter;
 
 final class BasicMoney extends MoneyProvider
 {
-
     public function abs(): Money
     {
         return new Money(abs($this->amount), $this->currency);

@@ -27,7 +27,7 @@ final class BasicMoney extends MoneyProvider
      *
      * @return Money
      */
-    public function divide(float $operator): Money
+    public function divide($operator): Money
     {
         if ($operator == 0) {
             throw new InvalidArgumentException('Cannot divide by zero');

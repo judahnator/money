@@ -44,7 +44,7 @@ class Money implements MoneyInterface
      * @param float $operator
      * @return static
      */
-    public function divide(float $operator): Money
+    public function divide($operator): Money
     {
         return $this->provider->divide($operator);
     }

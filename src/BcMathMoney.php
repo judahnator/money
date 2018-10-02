@@ -26,11 +26,11 @@ final class BcMathMoney extends MoneyProvider
     }
 
     /**
-     * @param float $operator
+     * @param float|string $operator
      *
      * @return Money
      */
-    public function divide(float $operator): Money
+    public function divide($operator): Money
     {
         if (bccomp($operator, 0) === 0) {
             throw new InvalidArgumentException('Cannot divide by zero');

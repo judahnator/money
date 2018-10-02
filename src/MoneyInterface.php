@@ -11,10 +11,10 @@ interface MoneyInterface
     public function add(Money $money): Money;
 
     /**
-     * @param float $operator
+     * @param float|string $operator
      * @return Money
      */
-    public function divide(float $operator): Money;
+    public function divide($operator): Money;
 
     /**
      * Returns a rounded string with the currency symbol
